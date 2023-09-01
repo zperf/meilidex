@@ -19,7 +19,7 @@ Outputs:
 {"hash":"72395ed51d4d967b407cf17aac3cee4d","url":"http://127.0.0.1/Cargo.lock"}
 ```
 
-Then follow [meilisearch - add docuemtns](https://www.meilisearch.com/docs/learn/getting_started/quick_start#add-documents) to import documents and you can search for files.
+Then follow [meilisearch - add documents](https://www.meilisearch.com/docs/learn/getting_started/quick_start#add-documents) to import documents and you can search for files.
 
 ## License
 
