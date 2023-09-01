@@ -13,5 +13,4 @@ ignore = { version = "0.4.20", features = ["simd-accel"] }
 log = "0.4.20"
 md5 = "0.7.0"
 serde_json = "1.0.105"
-tokio = { version = "1.32.0", features = ["full"] }
 url = "2.4.1"

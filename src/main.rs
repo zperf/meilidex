@@ -21,8 +21,7 @@ struct Cli {
     threads: usize,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), anyhow::Error> {
+fn main() {
     env_logger::init();
     let cli = Cli::parse();
     let walk = WalkBuilder::new(&cli.root_dir)
@@ -33,5 +32,4 @@ async fn main() -> Result<(), anyhow::Error> {
         &cli.base_url,
         &cli.root_dir.as_path().display().to_string(),
     ));
-    Ok(())
 }
