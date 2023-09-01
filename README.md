@@ -1,4 +1,4 @@
-# meihao
+# meilidex
 
 A parallel path walker for file searching.
 
@@ -7,7 +7,7 @@ A parallel path walker for file searching.
 Execute this in your shell:
 
 ```bash
-meihao http://127.0.0.1/f .
+meilidex http://127.0.0.1/f .
 ```
 
 Outputs:
