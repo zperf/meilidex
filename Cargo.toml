@@ -8,9 +8,10 @@ edition = "2021"
 [dependencies]
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 clap = { version = "4.4.1", features = ["derive"] }
+digest = "0.10.7"
 env_logger = "0.10.0"
 ignore = { version = "0.4.20", features = ["simd-accel"] }
 log = "0.4.20"
-md5 = "0.7.0"
+md-5 = "0.10.5"
 serde_json = "1.0.105"
 url = "2.4.1"

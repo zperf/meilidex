@@ -9,7 +9,7 @@ use crate::walker::MyWalkerBuilder;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Cli {
+pub struct Cli {
     /// HTTP server base url
     base_url: String,
 
@@ -19,6 +19,10 @@ struct Cli {
     /// Thread count
     #[arg(short, default_value_t = 8)]
     threads: usize,
+
+    /// File hash
+    #[arg(short, default_value_t = false)]
+    file_hash: bool,
 }
 
 fn main() {
@@ -28,8 +32,5 @@ fn main() {
         .git_ignore(false)
         .threads(cli.threads)
         .build_parallel();
-    walk.visit(&mut MyWalkerBuilder::new(
-        &cli.base_url,
-        &cli.root_dir.as_path().display().to_string(),
-    ));
+    walk.visit(&mut MyWalkerBuilder::new(&cli));
 }

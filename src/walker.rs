@@ -1,42 +1,42 @@
+use std::collections::HashMap;
+use std::fs;
+use std::io;
+use std::path::Path;
+
 use ignore::{ParallelVisitor, ParallelVisitorBuilder, WalkState};
-use serde_json::json;
+use md5::Digest;
+use md5::Md5;
 use url::Url;
 
-pub struct MyWalkerBuilder {
-    base_url: String,
-    prefix: String,
+use crate::Cli;
+
+pub struct MyWalkerBuilder<'a> {
+    cli: &'a Cli,
 }
 
-impl MyWalkerBuilder {
-    pub fn new(base_url: &String, prefix: &String) -> Self {
-        MyWalkerBuilder {
-            base_url: base_url.to_string(),
-            prefix: prefix.to_string(),
-        }
+impl<'a> MyWalkerBuilder<'a> {
+    pub fn new(cli: &'a Cli) -> Self {
+        MyWalkerBuilder { cli }
     }
 }
 
-impl<'a> ParallelVisitorBuilder<'a> for MyWalkerBuilder {
+impl<'a> ParallelVisitorBuilder<'a> for MyWalkerBuilder<'a> {
     fn build(&mut self) -> Box<dyn ParallelVisitor + 'a> {
-        Box::new(MyWalker::new(&self))
+        Box::new(MyWalker::new(self.cli))
     }
 }
 
-pub struct MyWalker {
-    base_url: Url,
-    prefix: String,
+pub struct MyWalker<'a> {
+    cli: &'a Cli,
 }
 
-impl MyWalker {
-    pub fn new(builder: &MyWalkerBuilder) -> Self {
-        MyWalker {
-            base_url: Url::parse(builder.base_url.as_str()).unwrap(),
-            prefix: builder.prefix.to_string(),
-        }
+impl<'a> MyWalker<'a> {
+    pub fn new(cli: &'a Cli) -> Self {
+        MyWalker { cli }
     }
 }
 
-impl ParallelVisitor for MyWalker {
+impl<'a> ParallelVisitor for MyWalker<'a> {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> WalkState {
         match self.do_visit(entry) {
             Ok(s) => s,
@@ -48,7 +48,7 @@ impl ParallelVisitor for MyWalker {
     }
 }
 
-impl MyWalker {
+impl<'a> MyWalker<'a> {
     fn do_visit(
         &mut self,
         entry: Result<ignore::DirEntry, ignore::Error>,
@@ -57,21 +57,36 @@ impl MyWalker {
             Ok(file) => {
                 if file.metadata()?.is_file() {
                     let p = file.path().display().to_string();
-                    let p = p.strip_prefix(&self.prefix).unwrap_or(&p);
-                    let url = self.base_url.clone().join(&p).unwrap().to_string();
-                    let hash = md5::compute(&url);
-                    println!(
-                        "{}",
-                        serde_json::to_string(&json!({
-                            "url": url,
-                            "hash": format!("{:x}", hash),
-                        }))
+                    let p = p.strip_prefix(&self.cli.base_url).unwrap_or(&p);
+                    let url = Url::parse(&self.cli.base_url)?
+                        .join(&p)
                         .unwrap()
-                    );
+                        .to_string();
+                    let hash = compute_string_hash(&url);
+                    let mut ret = HashMap::from([("url", url), ("hash", hash)]);
+
+                    if self.cli.file_hash {
+                        ret.insert("file_hash", compute_file_hash(file.path())?);
+                    }
+
+                    println!("{}", serde_json::to_string(&ret).unwrap());
                 }
                 Ok(WalkState::Continue)
             }
             Err(ex) => Err(ex.into()),
         }
     }
+}
+
+fn compute_file_hash(path: &Path) -> Result<String, anyhow::Error> {
+    let mut file = fs::File::open(&path)?;
+    let mut hash = Md5::default();
+    io::copy(&mut file, &mut hash)?;
+    Ok(format!("{:x}", hash.finalize()))
+}
+
+fn compute_string_hash(s: &String) -> String {
+    let mut hash = Md5::default();
+    hash.update(s);
+    format!("{:x}", hash.finalize())
 }
