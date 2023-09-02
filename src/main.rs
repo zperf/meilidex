@@ -17,7 +17,7 @@ pub struct Cli {
     root_dir: PathBuf,
 
     /// Thread count
-    #[arg(short, default_value_t = 8)]
+    #[arg(short, default_value_t = num_cpus::get() - 2)]
     threads: usize,
 
     /// File hash
