@@ -375,6 +375,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6365506850d44bff6e2fbcb5176cf63650e48bd45ef2fe2665ae1570e0f4b9ca"
 dependencies = [
  "digest",
+ "md5-asm",
+]
+
+[[package]]
+name = "md5-asm"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61d33bc4cdfe5c60340e282bbbee0a6e2bc57f0b9279bb3489c5004d12492e5c"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
