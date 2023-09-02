@@ -23,13 +23,17 @@ pub struct Cli {
     /// File hash
     #[arg(short, default_value_t = false)]
     file_hash: bool,
+
+    /// Ignore files with .gitignore
+    #[arg(short, default_value_t = false)]
+    git_ignore: bool,
 }
 
 fn main() {
     env_logger::init();
     let cli = Cli::parse();
     let walk = WalkBuilder::new(&cli.root_dir)
-        .git_ignore(false)
+        .git_ignore(cli.git_ignore)
         .threads(cli.threads)
         .build_parallel();
     walk.visit(&mut MyWalkerBuilder::new(&cli));
