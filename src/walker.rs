@@ -72,7 +72,7 @@ impl<'a> MyWalker<'a> {
                     let path = file.path();
                     let mut ret = HashMap::from([
                         ("url", url),
-                        ("hash", hash),
+                        ("id", hash),
                         ("path", fs::canonicalize(&path)?.display().to_string()),
                         ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
                     ]);
