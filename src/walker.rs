@@ -67,7 +67,7 @@ impl<'a> MyWalker<'a> {
                         .unwrap()
                         .to_string();
                     let hash = compute_string_hash(&url);
-                    let mtime: DateTime<chrono::Local> = st.created()?.into();
+                    let mtime: DateTime<chrono::Local> = st.modified()?.into();
                     let mut ret = HashMap::from([
                         ("url", url),
                         ("hash", hash),
