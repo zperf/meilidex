@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io;
+use chrono::DateTime;
 use std::path::Path;
 
 use ignore::{ParallelVisitor, ParallelVisitorBuilder, WalkState};
@@ -9,6 +10,8 @@ use md5::Md5;
 use url::Url;
 
 use crate::Cli;
+
+const DATETIME_FORMATTER: &'static str = "%Y-%m-%dT%H:%M:%S";
 
 pub struct MyWalkerBuilder<'a> {
     cli: &'a Cli,
@@ -55,7 +58,8 @@ impl<'a> MyWalker<'a> {
     ) -> Result<WalkState, anyhow::Error> {
         match entry {
             Ok(file) => {
-                if file.metadata()?.is_file() {
+                let st = file.metadata()?;
+                if st.is_file() {
                     let p = file.path().display().to_string();
                     let p = p.strip_prefix(&self.cli.base_url).unwrap_or(&p);
                     let url = Url::parse(&self.cli.base_url)?
@@ -63,7 +67,12 @@ impl<'a> MyWalker<'a> {
                         .unwrap()
                         .to_string();
                     let hash = compute_string_hash(&url);
-                    let mut ret = HashMap::from([("url", url), ("hash", hash)]);
+                    let mtime: DateTime<chrono::Local> = st.created()?.into();
+                    let mut ret = HashMap::from([
+                        ("url", url),
+                        ("hash", hash),
+                        ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
+                    ]);
 
                     if self.cli.file_hash {
                         ret.insert("file_hash", compute_file_hash(file.path())?);

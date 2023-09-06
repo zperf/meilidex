@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.75", features = ["backtrace"] }
+chrono = "0.4.29"
 clap = { version = "4.4.1", features = ["derive"] }
 digest = "0.10.7"
 env_logger = "0.10.0"
