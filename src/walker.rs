@@ -61,7 +61,7 @@ impl<'a> MyWalker<'a> {
                 let st = file.metadata()?;
                 if st.is_file() {
                     let p = file.path().display().to_string();
-                    let p = p.strip_prefix(&self.cli.base_url).unwrap_or(&p);
+                    let p = p.strip_prefix(&self.cli.root_dir.display().to_string()).unwrap_or(&p);
                     let url = Url::parse(&self.cli.base_url)?
                         .join(&p)
                         .unwrap()
