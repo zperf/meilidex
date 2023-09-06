@@ -1,7 +1,7 @@
+use chrono::DateTime;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
-use chrono::DateTime;
 use std::path::Path;
 
 use ignore::{ParallelVisitor, ParallelVisitorBuilder, WalkState};
@@ -68,9 +68,12 @@ impl<'a> MyWalker<'a> {
                         .to_string();
                     let hash = compute_string_hash(&url);
                     let mtime: DateTime<chrono::Local> = st.modified()?.into();
+
+                    let path = file.path();
                     let mut ret = HashMap::from([
                         ("url", url),
                         ("hash", hash),
+                        ("path", fs::canonicalize(&path)?.display().to_string()),
                         ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
                     ]);
 
