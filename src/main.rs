@@ -1,11 +1,12 @@
 mod walker;
 
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 use clap::Parser;
 use ignore::WalkBuilder;
 
-use crate::walker::MyWalkerBuilder;
+use crate::walker::{MyWalkerBuilder, process};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -27,14 +28,34 @@ pub struct Cli {
     /// Ignore files with .gitignore
     #[arg(short, default_value_t = false)]
     git_ignore: bool,
+
+    /// Sequential file walking or not
+    #[arg(short, default_value_t = false)]
+    sequential: bool,
 }
 
-fn main() {
+fn main() -> ExitCode {
     env_logger::init();
     let cli = Cli::parse();
-    let walk = WalkBuilder::new(&cli.root_dir)
+    let mut walk = WalkBuilder::new(&cli.root_dir);
+    let walk = walk
         .git_ignore(cli.git_ignore)
-        .threads(cli.threads)
-        .build_parallel();
-    walk.visit(&mut MyWalkerBuilder::new(&cli));
+        .threads(cli.threads);
+
+    if !cli.sequential {
+        walk.build_parallel().visit(&mut MyWalkerBuilder::new(&cli));
+    } else {
+        for file in walk.build() {
+            match file {
+                Ok(entry) => { process(entry, &cli).unwrap(); },
+                Err(ex) => {
+                    log::error!("Unexpected error: {}", ex);
+                    return ExitCode::FAILURE
+                },
+            }
+
+        }
+    }
+
+    ExitCode::SUCCESS
 }
