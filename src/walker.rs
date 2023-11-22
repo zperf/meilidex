@@ -2,6 +2,7 @@ use chrono::DateTime;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
+use std::os::linux::fs::MetadataExt;
 use std::path::Path;
 
 use ignore::{DirEntry, ParallelVisitor, ParallelVisitorBuilder, WalkState};
@@ -84,6 +85,7 @@ pub fn process(file: DirEntry, cli: &Cli) -> Result<(), anyhow::Error> {
             ("id", hash),
             ("path", fs::canonicalize(&path)?.display().to_string()),
             ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
+            ("size", format!("{}", st.st_size())),
         ]);
 
         if cli.file_hash {
