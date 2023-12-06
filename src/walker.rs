@@ -1,5 +1,4 @@
 use chrono::DateTime;
-use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::os::linux::fs::MetadataExt;
@@ -80,19 +79,21 @@ pub fn process(file: DirEntry, cli: &Cli) -> Result<(), anyhow::Error> {
         let mtime: DateTime<chrono::Local> = st.modified()?.into();
 
         let path = file.path();
-        let mut ret = HashMap::from([
+        let file_size = st.st_size();
+        let mut ret: heapless::LinearMap<&str, String, 8> = [
             ("url", url),
             ("id", hash),
             ("path", fs::canonicalize(&path)?.display().to_string()),
             ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
-            ("size", format!("{}", st.st_size())),
-        ]);
+            ("size", format!("{}", file_size)),
+            ("file_size", human_bytes::human_bytes(file_size as f64))
+        ].into_iter().collect();
 
         if cli.file_hash {
-            ret.insert("file_hash", compute_file_hash(file.path())?);
+            ret.insert("file_hash", compute_file_hash(file.path())?).unwrap();
         }
 
-        println!("{}", serde_json::to_string(&ret).unwrap());
+        serde_json::to_writer(std::io::stdout().lock(), &ret).unwrap();
     }
     Ok(())
 }
