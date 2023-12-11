@@ -93,7 +93,7 @@ pub fn process(file: DirEntry, cli: &Cli) -> Result<(), anyhow::Error> {
             ret.insert("file_hash", compute_file_hash(file.path())?).unwrap();
         }
 
-        serde_json::to_writer(std::io::stdout().lock(), &ret).unwrap();
+        println!("{}", serde_json::to_string(&ret).unwrap());
     }
     Ok(())
 }
