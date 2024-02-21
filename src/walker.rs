@@ -1,7 +1,12 @@
+#[cfg(target_os = "linux")]
+use std::os::linux::fs::MetadataExt;
+
+#[cfg(target_os = "macos")]
+use std::os::macos::fs::MetadataExt;
+
 use chrono::DateTime;
 use std::fs;
 use std::io;
-use std::os::linux::fs::MetadataExt;
 use std::path::Path;
 
 use ignore::{DirEntry, ParallelVisitor, ParallelVisitorBuilder, WalkState};
@@ -40,21 +45,16 @@ impl<'a> MyWalker<'a> {
 }
 
 impl<'a> ParallelVisitor for MyWalker<'a> {
-    fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> WalkState {
-        match self.do_visit(entry) {
-            Ok(s) => s,
-            Err(ex) => {
-                log::error!("Unexpected error: {}", ex);
-                WalkState::Quit
-            }
-        }
+    fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> WalkState {
+        self.do_visit(entry).unwrap();
+        WalkState::Continue
     }
 }
 
 impl<'a> MyWalker<'a> {
     fn do_visit(
         &mut self,
-        entry: Result<ignore::DirEntry, ignore::Error>,
+        entry: Result<DirEntry, ignore::Error>,
     ) -> Result<WalkState, anyhow::Error> {
         match entry {
             Ok(file) => {
@@ -68,33 +68,35 @@ impl<'a> MyWalker<'a> {
 
 pub fn process(file: DirEntry, cli: &Cli) -> Result<(), anyhow::Error> {
     let st = file.metadata()?;
-    if st.is_file() {
-        let p = file.path().display().to_string();
-        let p = p.strip_prefix(&cli.root_dir.display().to_string()).unwrap_or(&p);
-        let url = Url::parse(cli.base_url.as_str())?
-            .join(&p)
-            .unwrap()
-            .to_string();
-        let hash = compute_string_hash(&url);
-        let mtime: DateTime<chrono::Local> = st.modified()?.into();
-
-        let path = file.path();
-        let file_size = st.st_size();
-        let mut ret: heapless::LinearMap<&str, String, 8> = [
-            ("url", url),
-            ("id", hash),
-            ("path", fs::canonicalize(&path)?.display().to_string()),
-            ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
-            ("size", format!("{}", file_size)),
-            ("file_size", human_bytes::human_bytes(file_size as f64))
-        ].into_iter().collect();
-
-        if cli.file_hash {
-            ret.insert("file_hash", compute_file_hash(file.path())?).unwrap();
-        }
-
-        println!("{}", serde_json::to_string(&ret).unwrap());
+    if !st.is_file() {
+        return Ok(());
     }
+
+    let p = file.path().display().to_string();
+    let p = p.strip_prefix(&cli.root_dir.display().to_string()).unwrap_or(&p);
+    let url = match &cli.base_url {
+        None => String::new(),
+        Some(base_url) => Url::parse(base_url.as_str())?.join(&p).unwrap().to_string(),
+    };
+    let mtime: DateTime<chrono::Local> = st.modified()?.into();
+
+    let path = file.path();
+    let path_str = fs::canonicalize(&path)?.display().to_string();
+    let hash = compute_string_hash(&path_str);
+    let file_size = st.st_size();
+    let mut ret: heapless::LinearMap<&str, String, 8> = [
+        ("url", url),
+        ("id", hash),
+        ("path", path_str),
+        ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
+        ("file_size", human_bytes::human_bytes(file_size as f64))
+    ].into_iter().collect();
+
+    if cli.file_hash {
+        ret.insert("file_hash", compute_file_hash(file.path())?).unwrap();
+    }
+
+    println!("{}", serde_json::to_string(&ret).unwrap());
     Ok(())
 }
 

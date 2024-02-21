@@ -1,7 +1,6 @@
 mod walker;
 
 use std::path::PathBuf;
-use std::process::ExitCode;
 
 use clap::Parser;
 use ignore::WalkBuilder;
@@ -12,7 +11,8 @@ use crate::walker::{MyWalkerBuilder, process};
 #[command(version, about, long_about = None)]
 pub struct Cli {
     /// HTTP server base url
-    base_url: String,
+    #[arg(short)]
+    base_url: Option<String>,
 
     /// Root directory
     root_dir: PathBuf,
@@ -34,7 +34,8 @@ pub struct Cli {
     sequential: bool,
 }
 
-fn main() -> ExitCode {
+fn main() -> Result<(), anyhow::Error> {
+    color_backtrace::install();
     env_logger::init();
     let cli = Cli::parse();
     let mut walk = WalkBuilder::new(&cli.root_dir);
@@ -46,16 +47,8 @@ fn main() -> ExitCode {
         walk.build_parallel().visit(&mut MyWalkerBuilder::new(&cli));
     } else {
         for file in walk.build() {
-            match file {
-                Ok(entry) => { process(entry, &cli).unwrap(); },
-                Err(ex) => {
-                    log::error!("Unexpected error: {}", ex);
-                    return ExitCode::FAILURE
-                },
-            }
-
+            process(file?, &cli)?;
         }
     }
-
-    ExitCode::SUCCESS
+    Ok(())
 }
