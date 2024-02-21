@@ -11,26 +11,26 @@ use crate::walker::{MyWalkerBuilder, process};
 #[command(version, about, long_about = None)]
 pub struct Cli {
     /// HTTP server base url
-    #[arg(short)]
+    #[arg(short, long)]
     base_url: Option<String>,
 
     /// Root directory
     root_dir: PathBuf,
 
     /// Thread count
-    #[arg(short, default_value_t = num_cpus::get() - 2)]
+    #[arg(short, long, default_value_t = num_cpus::get() - 2)]
     threads: usize,
 
     /// File hash
-    #[arg(short, default_value_t = false)]
+    #[arg(short, long, default_value_t = false)]
     file_hash: bool,
 
     /// Ignore files with .gitignore
-    #[arg(short, default_value_t = false)]
+    #[arg(short, long, default_value_t = false)]
     git_ignore: bool,
 
     /// Sequential file walking or not
-    #[arg(short, default_value_t = false)]
+    #[arg(short, long, default_value_t = false)]
     sequential: bool,
 }
 
