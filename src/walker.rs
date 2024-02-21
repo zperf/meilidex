@@ -85,7 +85,6 @@ pub fn process(file: DirEntry, cli: &Cli) -> Result<(), anyhow::Error> {
     let hash = compute_string_hash(&path_str);
     let file_size = st.st_size();
     let mut ret: heapless::LinearMap<&str, String, 8> = [
-        ("url", url),
         ("id", hash),
         ("path", path_str),
         ("mtime", mtime.format(DATETIME_FORMATTER).to_string()),
@@ -94,6 +93,9 @@ pub fn process(file: DirEntry, cli: &Cli) -> Result<(), anyhow::Error> {
 
     if cli.file_hash {
         ret.insert("file_hash", compute_file_hash(file.path())?).unwrap();
+    }
+    if !url.is_empty() {
+        ret.insert("url", url).unwrap();
     }
 
     println!("{}", serde_json::to_string(&ret).unwrap());
